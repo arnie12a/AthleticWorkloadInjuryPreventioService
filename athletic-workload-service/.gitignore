@@ -1,16 +1,24 @@
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
 # Python
 __pycache__/
 *.pyc
 venv/
 .venv/
 
-# Environment variables
-.env
+# Node.js
+node_modules/
+dist/
 
-# Local activity files
-*.fit
+# Local uploaded Garmin files
+backend/uploads/
+
+# Local databases
+*.db
+*.sqlite3
 
 # macOS
 .DS_Store
-
-backend/uploads/

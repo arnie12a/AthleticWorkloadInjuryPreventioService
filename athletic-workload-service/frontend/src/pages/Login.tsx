@@ -20,21 +20,38 @@ import { supabase } from "../lib/supabase";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isSignup, setIsSignup] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
 
+  const passwordsMatch =
+    password === confirmPassword;
+
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    setLoading(true);
     setMessage("");
     setIsError(false);
 
+    // Validate password confirmation before contacting Supabase
+    if (isSignup && !passwordsMatch) {
+      setIsError(true);
+      setMessage("Passwords do not match. Please try again.");
+      return;
+    }
+
+    if (isSignup && password.length < 6) {
+      setIsError(true);
+      setMessage("Password must be at least 6 characters.");
+      return;
+    }
+
+    setLoading(true);
+
     try {
       if (isSignup) {
-        // Create a new Supabase account
         const { data, error } = await supabase.auth.signUp({
           email: email.trim(),
           password,
@@ -49,8 +66,10 @@ export default function Login() {
         } else {
           setMessage("Account created successfully!");
         }
+
+        setPassword("");
+        setConfirmPassword("");
       } else {
-        // Log in with an existing Supabase account
         const { error } = await supabase.auth.signInWithPassword({
           email: email.trim(),
           password,
@@ -75,6 +94,7 @@ export default function Login() {
     setMessage("");
     setIsError(false);
     setPassword("");
+    setConfirmPassword("");
   }
 
   return (
@@ -97,7 +117,7 @@ export default function Login() {
         <form onSubmit={handleSubmit}>
           <Stack gap={6}>
 
-            {/* Application branding */}
+            {/* Branding */}
             <Stack align="center" gap={3}>
               <Center
                 w="60px"
@@ -105,10 +125,7 @@ export default function Login() {
                 bg="rgba(56,189,248,0.12)"
                 borderRadius="2xl"
               >
-                <Activity
-                  size={32}
-                  color="#38bdf8"
-                />
+                <Activity size={32} color="#38bdf8" />
               </Center>
 
               <Heading
@@ -128,20 +145,13 @@ export default function Login() {
               </Text>
             </Stack>
 
-            {/* Login / Signup heading */}
+            {/* Heading */}
             <Box>
-              <Heading
-                size="lg"
-                color="white"
-                mb={2}
-              >
+              <Heading size="lg" color="white" mb={2}>
                 {isSignup ? "Create an account" : "Welcome back"}
               </Heading>
 
-              <Text
-                color="#94a3b8"
-                fontSize="sm"
-              >
+              <Text color="#94a3b8" fontSize="sm">
                 {isSignup
                   ? "Sign up to start analyzing your Garmin activities."
                   : "Sign in to view your workouts and training analytics."}
@@ -187,9 +197,7 @@ export default function Login() {
               <Input
                 type="password"
                 placeholder={
-                  isSignup
-                    ? "Create a password"
-                    : "Enter your password"
+                  isSignup ? "Create a password" : "Enter your password"
                 }
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -208,6 +216,60 @@ export default function Login() {
                 }}
               />
             </Field.Root>
+
+            {/* Confirm password - signup only */}
+            {isSignup && (
+              <Field.Root
+                required
+                invalid={
+                  confirmPassword.length > 0 &&
+                  !passwordsMatch
+                }
+              >
+                <Field.Label color="#cbd5e1">
+                  <HStack gap={2}>
+                    <Lock size={15} />
+                    <Text>Confirm password</Text>
+                  </HStack>
+                </Field.Label>
+
+                <Input
+                  type="password"
+                  placeholder="Re-enter your password"
+                  value={confirmPassword}
+                  onChange={(e) =>
+                    setConfirmPassword(e.target.value)
+                  }
+                  autoComplete="new-password"
+                  minLength={6}
+                  required
+                  bg="#0b1220"
+                  borderColor="#34435a"
+                  color="white"
+                  _placeholder={{ color: "#64748b" }}
+                  _focusVisible={{
+                    borderColor: "#38bdf8",
+                    boxShadow: "0 0 0 1px #38bdf8",
+                  }}
+                />
+
+                {confirmPassword.length > 0 && (
+                  <Text
+                    fontSize="xs"
+                    color={
+                      passwordsMatch
+                        ? "#86efac"
+                        : "#fca5a5"
+                    }
+                    mt={2}
+                  >
+                    {passwordsMatch
+                      ? "Passwords match"
+                      : "Passwords do not match"}
+                  </Text>
+                )}
+              </Field.Root>
+            )}
 
             {/* Authentication feedback */}
             {message && (
@@ -229,14 +291,16 @@ export default function Login() {
               >
                 <Text
                   fontSize="sm"
-                  color={isError ? "#fca5a5" : "#86efac"}
+                  color={
+                    isError ? "#fca5a5" : "#86efac"
+                  }
                 >
                   {message}
                 </Text>
               </Box>
             )}
 
-            {/* Submit button */}
+            {/* Submit */}
             <Button
               type="submit"
               w="full"
@@ -244,25 +308,20 @@ export default function Login() {
               bg="#38bdf8"
               color="#0b1220"
               fontWeight="semibold"
-              disabled={loading}
+              disabled={
+                loading ||
+                (isSignup &&
+                  (!confirmPassword || !passwordsMatch))
+              }
               loading={loading}
-              _hover={{
-                bg: "#7dd3fc",
-              }}
+              _hover={{ bg: "#7dd3fc" }}
             >
               {isSignup ? "Create Account" : "Log In"}
             </Button>
 
-            {/* Toggle login/signup */}
-            <HStack
-              justify="center"
-              gap={1}
-              flexWrap="wrap"
-            >
-              <Text
-                color="#94a3b8"
-                fontSize="sm"
-              >
+            {/* Switch between login and signup */}
+            <HStack justify="center" gap={1} flexWrap="wrap">
+              <Text color="#94a3b8" fontSize="sm">
                 {isSignup
                   ? "Already have an account?"
                   : "Don't have an account?"}
@@ -276,9 +335,7 @@ export default function Login() {
                 disabled={loading}
                 onClick={toggleMode}
                 p={1}
-                _hover={{
-                  color: "#7dd3fc",
-                }}
+                _hover={{ color: "#7dd3fc" }}
               >
                 {isSignup ? "Log in" : "Sign up"}
               </Button>
