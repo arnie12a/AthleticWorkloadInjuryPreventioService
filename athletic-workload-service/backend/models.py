@@ -158,3 +158,15 @@ class ProcessingJobDB(Base):
         DateTime(timezone=True),
         nullable=True
     )
+    
+    workout_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("workouts.id", ondelete="SET NULL"),
+        nullable=True
+    )
+
+    attempt_count = Column(
+        Integer,
+        nullable=False,
+        default=0
+    )

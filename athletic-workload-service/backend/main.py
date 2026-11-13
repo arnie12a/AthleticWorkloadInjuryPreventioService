@@ -46,12 +46,25 @@ from models import ProcessingJobDB
 from queue_service import enqueue_workout
 from job_service import get_job_file
 
+from fastapi.middleware.cors import CORSMiddleware
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Athletic Workload API",
     description="Garmin FIT-based workload analysis",
     version="1.0.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173"
+    ],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PATCH"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 MAX_FILE_SIZE = 20 * 1024 * 1024
@@ -689,6 +702,7 @@ async def get_processing_job(
         "status": job.status,
         "error_message": job.error_message,
         "created_at": job.created_at,
-        "completed_at": job.completed_at
+        "completed_at": job.completed_at,
+        "workout_id": str(job.workout_id) if job.workout_id else None,
     }
 
